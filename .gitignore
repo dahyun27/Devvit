@@ -1,0 +1,10 @@
+## Xcode 기본 설정 
+.DS_Store
+UserInterfaceState.xcuserstate
+build/
+DerivedData/
+*.os_activity_dt_mode
+*.xcresult
+
+## 내가 숨긴 파일
+GoogleService-Info.plist
