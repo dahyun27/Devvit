@@ -18,14 +18,14 @@ class LoginCoordinator: ObservableObject {
     var onFinish: (() -> Void)?
     
     func start() {
-            // 초기화 로직 (필요 시)
+        // 초기화 로직 (필요 시)
+    }
+    
+    func navigate(to route: LoginRoute) {
+        switch route {
+        case .home:
+            // 실제 앱에서는 여기서 AppCoordinator에게 알리거나 RootView를 교체합니다.
+            onFinish?()
         }
-        
-        func navigate(to route: LoginRoute) {
-            switch route {
-            case .home:
-                // 실제 앱에서는 여기서 AppCoordinator에게 알리거나 RootView를 교체합니다.
-                onFinish?()
-            }
-        }
+    }
 }

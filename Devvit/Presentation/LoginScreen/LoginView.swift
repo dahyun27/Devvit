@@ -15,10 +15,10 @@ struct LoginView: View {
     
     var body: some View {
         ZStack {
-            Color("111814")
+            Color(hex: "111814")
                 .ignoresSafeArea()
             
-            VStack(spacing: 30) {
+            VStack(spacing: 0) {
                 Spacer()
                 
                 VStack(spacing: 15) {
@@ -26,71 +26,65 @@ struct LoginView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80)
-//                        .foregroundColor(.green)
                         .padding()
-//                        .background(Color.white)
-//                        .clipShape(Circle())
-//                        .shadow(radius: 5)
-                    
                     
                     Image(.logoLogin)
                         .scaledToFit()
                 }
-                
+
                 Spacer()
                 
                 VStack(spacing: 15) {
                     
-                    // ✨ 진짜 애플 로그인 버튼
-                    SignInWithAppleButton(
-                        onRequest: { request in
-                            // 1. 요청을 보낼 때 보안 암호(Nonce)를 같이 실어 보냄
-                            let nonce = authService.startSignInWithAppleFlow()
-                            request.requestedScopes = [.fullName, .email]
-                            request.nonce = nonce
-                        },
-                        onCompletion: { result in
-                            // 2. 결과가 돌아왔을 때 처리
-                            switch result {
-                            case .success(let authorization):
-                                if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                                    // 3. AuthService에게 Firebase 로그인 처리를 맡김
-                                    authService.signInToFirebase(credential: appleIDCredential)
-                                }
-                            case .failure(let error):
-                                print("애플 로그인 실패: \(error.localizedDescription)")
-                            }
-                        }
-                    )
-                    .signInWithAppleButtonStyle(.black) // 버튼 스타일 (검정)
-                    .frame(height: 50) // 높이 설정
-                    .cornerRadius(12)
-                    
-                    // 깃허브 버튼 (아직은 껍데기)
+                    // GitHub 로그인 버튼
                     Button(action: {
-                        print("깃허브 로그인 클릭")
+//                        viewModel.handleGitHubLogin()
                     }) {
-                        HStack {
-                            Text("GH")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                                .padding(4)
-                                .background(Color.white)
-                                .foregroundColor(.black)
-                                .clipShape(Circle())
-                            Text("GitHub로 계속하기")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(red: 0.1, green: 0.1, blue: 0.1))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        Image(.loginGithub)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 56)
                     }
+                    
+                    // Apple 로그인 버튼
+                    Button(action: {
+                        viewModel.handleAppleLogin()
+                    }) {
+                        Image(.loginApple)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 56)
+                    }
+                    .disabled(viewModel.isLoading)
                 }
-                .padding(.horizontal, 30)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 50)
             }
+            // 로딩 인디케이터
+            if viewModel.isLoading {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
+                }
+            }
+        }
+        
+        if let errorMessage = viewModel.errorMessage {
+            VStack {
+                Spacer()
+                
+                Text(errorMessage)
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(Color.red.opacity(0.9))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 50)
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(), value: viewModel.errorMessage)
         }
     }
 }

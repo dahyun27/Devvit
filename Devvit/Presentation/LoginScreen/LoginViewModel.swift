@@ -23,23 +23,35 @@ class LoginViewModel: ObservableObject {
         bindAuthService()
     }
     
-    // AuthService의 로그인 상태를 구독 (Combine)
+    // AuthService의 로그인 상태를 구독
     private func bindAuthService() {
         authService.$isUserLoggedIn
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoggedIn in
+                guard let self = self else { return }
+                
+                self.isLoading = false
+                
                 if isLoggedIn {
-                    self?.coordinator.navigate(to: .home)
+                    print("✅ 로그인 성공 → 홈 화면 이동")
+                    self.coordinator.navigate(to: .home)
                 }
             }
             .store(in: &cancellables)
     }
     
-    func handleAppleLoginSuccess(credential: ASAuthorizationAppleIDCredential) {
-        isLoading = true
-        authService.signInToFirebase(credential: credential)
-        // 로딩 해제는 AuthService의 상태 변화나 완료 핸들러에서 처리 (여기서는 단순화)
-        // 실제로는 AuthService에 completion handler를 추가하거나 상태를 더 세분화하는 것이 좋습니다.
+    func handleAppleLogin() {
+        print("🍎 Apple 로그인 시작")
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
+        request.requestedScopes = [.fullName, .email]
+        
+        let nonce = authService.startSignInWithAppleFlow()
+        request.nonce = nonce
+        
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        authorizationController.delegate = authService
+        authorizationController.performRequests()
     }
     
     func handleAppleLoginError(_ error: Error) {
