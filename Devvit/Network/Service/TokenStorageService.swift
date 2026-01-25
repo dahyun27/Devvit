@@ -11,7 +11,7 @@ final class TokenStorageService {
     static let shared = TokenStorageService()
     
     // MARK: - Keys
-    private let launchedKey = "Devvit_Launched"
+    private let firstLaunchKey = "Devvit_FirstLaunch"  // ← 이름 변경
     
     // Firebase 관련
     private let firebaseUIDKey = "Devvit_FirebaseUID"
@@ -42,14 +42,20 @@ final class TokenStorageService {
     
     // MARK: - First Launch Check
     func checkFirstLaunch() {
-        let isFirstLaunch = UserDefaults.standard.bool(forKey: launchedKey) == false
+        let isFirstLaunch = !UserDefaults.standard.bool(forKey: firstLaunchKey)
         
         print("📱 첫 실행 여부: \(isFirstLaunch)")
         
         if isFirstLaunch {
-            clearAllData()
-            UserDefaults.standard.set(true, forKey: launchedKey)
+            // ✅ 첫 실행 시: 로컬 데이터만 초기화 (Firebase는 그대로)
+            print("   → 로컬 데이터 초기화 (Firebase 데이터는 유지)")
+            
+            // 첫 실행 플래그만 설정
+            UserDefaults.standard.set(true, forKey: firstLaunchKey)
+            
             print("✅ 첫 실행 초기화 완료")
+        } else {
+            print("   → 재실행 (로컬 데이터 유지)")
         }
     }
     
@@ -230,7 +236,7 @@ final class TokenStorageService {
         print("   → 유지: 프로필, 온보딩, 활동 기록")
     }
     
-    /// 회원 탈퇴: 모든 데이터 삭제
+    /// 회원 탈퇴: 로컬 데이터 모두 삭제 (서버는 AuthService에서 처리)
     func clearForWithdraw() {
         clearFirebaseUID()
         clearAppleLoginInfo()
@@ -239,15 +245,8 @@ final class TokenStorageService {
         clearOnboardingState()
         clearActivityData()
         
-        print("🗑️ 회원 탈퇴 완료 - 모든 데이터 삭제")
-    }
-    
-    /// 앱 재설치/초기화: 완전 삭제
-    private func clearAllData() {
-        let domain = Bundle.main.bundleIdentifier!
-        UserDefaults.standard.removePersistentDomain(forName: domain)
-        UserDefaults.standard.synchronize()
-        print("🗑️ 모든 UserDefaults 데이터 삭제")
+        print("🗑️ 회원 탈퇴 완료 - 모든 로컬 데이터 삭제")
+        print("   → Firebase 데이터도 AuthService에서 삭제됨")
     }
     
     // MARK: - Debug

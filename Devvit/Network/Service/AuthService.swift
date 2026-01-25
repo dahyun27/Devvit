@@ -21,6 +21,7 @@ class AuthService: NSObject, ObservableObject {
     
     // MARK: - Private Properties
     var currentNonce: String?
+    private let tokenStorage = TokenStorageService.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Init
@@ -35,9 +36,58 @@ class AuthService: NSObject, ObservableObject {
             self.currentUser = user
             self.isUserLoggedIn = true
             print("✅ 기존 로그인 유저 확인: \(user.uid)")
+            syncUserDataFromFirebase(user: user)
         } else {
             self.isUserLoggedIn = false
             print("❌ 로그인 필요")
+        }
+    }
+    
+    // MARK: - Sync User Data from Firebase
+    private func syncUserDataFromFirebase(user: User) {
+        let db = Firestore.firestore()
+        
+        db.collection("users").document(user.uid).getDocument { [weak self] (document, error) in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("❌ Firestore 데이터 불러오기 실패: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let document = document, document.exists,
+                  let data = document.data() else {
+                print("⚠️ Firestore에 사용자 데이터 없음")
+                return
+            }
+            
+            print("📥 Firebase에서 사용자 데이터 동기화")
+            
+            // Firebase UID 저장
+            self.tokenStorage.saveFirebaseUID(user.uid)
+            
+            // Apple 정보 복원
+            if let appleUserID = data["appleUserID"] as? String {
+                let email = data["email"] as? String
+                let name = data["name"] as? String
+                
+                self.tokenStorage.saveAppleUserInfo(
+                    userId: appleUserID,
+                    email: email,
+                    fullName: name
+                )
+            }
+            
+            // 프로필 정보 복원
+            if let name = data["name"] as? String {
+                self.tokenStorage.saveProfile(nickname: name)
+            }
+            
+            // 온보딩 상태 확인
+            self.tokenStorage.clearOnboardingIfDifferentUser(currentUserId: user.uid)
+            
+            print("✅ 로컬 데이터 동기화 완료")
+            self.tokenStorage.printCurrentStatus()
         }
     }
     
