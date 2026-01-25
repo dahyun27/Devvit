@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 import AuthenticationServices
 import CryptoKit
 import Combine
@@ -56,27 +57,81 @@ class AuthService: ObservableObject {
         print("Name: \(displayName.isEmpty ? "없음" : displayName)")
         
         // 3. Firebase용 인증 정보(Credential) 생성
-            let firebaseCredential = OAuthProvider.appleCredential(
-                withIDToken: idTokenString,
-                rawNonce: nonce,
-                fullName: fullName
-            )
+        let firebaseCredential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: nonce,
+            fullName: fullName
+        )
         
         // 4. Firebase에 로그인
-        Auth.auth().signIn(with: firebaseCredential) { (authResult, error) in
+        Auth.auth().signIn(with: firebaseCredential) { [weak self] (authResult, error) in
+            guard let self = self else { return }
+            
             if let error = error {
-                print("Firebase 로그인 실패: \(error.localizedDescription)")
+                print("❌ Firebase 로그인 실패: \(error.localizedDescription)")
+                return
+            }
+            guard let user = authResult?.user else {
+                print("❌ 사용자 정보를 가져올 수 없습니다.")
                 return
             }
             
             // 로그인 성공!
-            print("🎉 Firebase 로그인 성공! User ID: \(authResult?.user.uid ?? "")")
+            print("🎉 Firebase 로그인 성공! User ID: \(user.uid)")
+            
+            self.saveUserData(
+                firebaseUID: user.uid,
+                email: email ?? user.email ?? "",
+                displayName: displayName,
+                appleUserID: userIdentifier
+            )
             
             // 메인 스레드에서 UI 업데이트
             DispatchQueue.main.async {
                 self.isUserLoggedIn = true
             }
         }
+    }
+}
+
+// MARK: - 사용자 데이터 저장
+extension AuthService {
+    
+    // Firestore와 UserDefaults에 사용자 정보 저장
+    private func saveUserData(
+        firebaseUID: String,
+        email: String,
+        displayName: String,
+        appleUserID: String
+    ) {
+        let db = Firestore.firestore()
+        
+        // 1) Firestore에 저장할 데이터 구조
+        let userData: [String: Any] = [
+            "uid": firebaseUID,
+            "email": email,
+            "name": displayName.isEmpty ? "개발자" : displayName,
+            "appleUserID": appleUserID,
+            "createdAt": FieldValue.serverTimestamp(),
+            "lastLoginAt": FieldValue.serverTimestamp()
+        ]
+        
+        // 2) Firestore에 저장 (merge: true는 기존 데이터 유지)
+        db.collection("users").document(firebaseUID).setData(userData, merge: true) { error in
+            if let error = error {
+                print("❌ Firestore 저장 실패: \(error.localizedDescription)")
+            } else {
+                print("✅ Firestore 저장 완료!")
+            }
+        }
+        
+        // 3) UserDefaults에도 저장 (빠른 접근용)
+        UserDefaults.standard.set(firebaseUID, forKey: "userUID")
+        UserDefaults.standard.set(appleUserID, forKey: "appleUserID")
+        UserDefaults.standard.set(email, forKey: "userEmail")
+        UserDefaults.standard.set(displayName.isEmpty ? "개발자" : displayName, forKey: "userName")
+        
+        print("💾 로컬 저장 완료!")
     }
 }
 
@@ -88,7 +143,7 @@ extension AuthService {
         currentNonce = nonce
         return sha256(nonce)
     }
-
+    
     private func randomNonceString(length: Int = 32) -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
@@ -100,7 +155,7 @@ extension AuthService {
         let nonce = randomBytes.map { charset[Int($0) % charset.count] }
         return String(nonce)
     }
-
+    
     private func sha256(_ input: String) -> String {
         let inputData = Data(input.utf8)
         let hashedData = SHA256.hash(data: inputData)

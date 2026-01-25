@@ -10,33 +10,31 @@ import AuthenticationServices
 
 
 struct LoginView: View {
+    @StateObject var viewModel: LoginViewModel
     @ObservedObject var authService = AuthService.shared
     
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground)
+            Color("111814")
                 .ignoresSafeArea()
             
             VStack(spacing: 30) {
                 Spacer()
                 
                 VStack(spacing: 15) {
-                    Image(systemName: "hare.fill")
+                    Image(.logoGrass)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 80, height: 80)
-                        .foregroundColor(.green)
+//                        .foregroundColor(.green)
                         .padding()
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(radius: 5)
+//                        .background(Color.white)
+//                        .clipShape(Circle())
+//                        .shadow(radius: 5)
                     
-                    Text("Devvit")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
                     
-                    Text("개발자의 성장을 기록하세요")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Image(.logoLogin)
+                        .scaledToFit()
                 }
                 
                 Spacer()
@@ -99,5 +97,5 @@ struct LoginView: View {
 
 
 #Preview {
-    LoginView()
+    LoginView(viewModel: LoginViewModel(coordinator: LoginCoordinator()))
 }
