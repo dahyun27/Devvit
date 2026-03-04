@@ -13,10 +13,11 @@ enum LoginRoute {
     case home // 로그인 성공 시 홈으로
 }
 
-class LoginCoordinator: ObservableObject {
-    
+class LoginCoordinator: Coordinator {
+    let id = UUID()
+
     var onFinish: (() -> Void)?
-    
+
     func start() {
         // 초기화 로직 (필요 시)
     }

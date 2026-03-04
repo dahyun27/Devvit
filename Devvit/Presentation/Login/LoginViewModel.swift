@@ -50,7 +50,9 @@ class LoginViewModel: ObservableObject {
         request.nonce = nonce
         
         let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        
         authorizationController.delegate = authService
+        authorizationController.presentationContextProvider = authService
         authorizationController.performRequests()
     }
     
