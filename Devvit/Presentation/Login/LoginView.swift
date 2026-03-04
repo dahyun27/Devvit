@@ -8,11 +8,9 @@
 import SwiftUI
 import AuthenticationServices
 
-
 struct LoginView: View {
     @StateObject var viewModel: LoginViewModel
-    @ObservedObject var authService = AuthService.shared
-    
+
     var body: some View {
         ZStack {
             Color(hex: "111814")
@@ -88,7 +86,6 @@ struct LoginView: View {
         }
     }
 }
-
 
 #Preview {
     LoginView(viewModel: LoginViewModel(coordinator: LoginCoordinator()))

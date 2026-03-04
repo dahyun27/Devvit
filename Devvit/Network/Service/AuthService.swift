@@ -5,7 +5,7 @@
 //  Created by 하다현 on 1/18/26.
 //
 
-import Foundation
+import UIKit
 import FirebaseAuth
 import FirebaseFirestore
 import AuthenticationServices
@@ -180,7 +180,7 @@ class AuthService: NSObject, ObservableObject {
 extension AuthService {
     
     /// Firestore와 UserDefaults에 사용자 정보 저장
-    private func saveUserToFirestoreAndLocal (
+    private func saveUserToFirestoreAndLocal(
         firebaseUID: String,
         email: String,
         displayName: String,
@@ -219,6 +219,17 @@ extension AuthService {
         
         print("💾 유저 데이터 동기화 완료 (Firestore + Local)")
 
+    }
+}
+
+extension AuthService: ASAuthorizationControllerPresentationContextProviding {
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        // 현재 앱의 가장 위에 있는 윈도우를 찾아서 반환
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return ASPresentationAnchor()
+        }
+        return window
     }
 }
 
@@ -271,10 +282,3 @@ extension AuthService {
         return hashString
     }
 }
-
-// MARK: - Notification Names
-extension Notification.Name {
-    static let appleLoginDidFail = Notification.Name("appleLoginDidFail")
-}
-
-

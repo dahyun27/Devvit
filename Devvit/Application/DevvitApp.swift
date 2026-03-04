@@ -10,8 +10,10 @@ import FirebaseCore
 import FirebaseAuth
 
 class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
         FirebaseApp.configure() // 파이어베이스 시동 걸기
         print("🔥 Firebase 초기화 완료")
         return true
@@ -35,7 +37,7 @@ struct DevvitApp: App {
                     LoginView(viewModel: LoginViewModel(coordinator: loginCoordinator))
                     
                 case .home:
-                    HomeView()
+                    MainTabView()
                 }
             }
             .onAppear {
@@ -44,7 +46,6 @@ struct DevvitApp: App {
             }
         }
     }
-    
     
     private func createLoginView() -> some View {
         let coordinator = LoginCoordinator()

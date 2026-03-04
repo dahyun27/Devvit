@@ -8,3 +8,4 @@ DerivedData/
 
 ## 내가 숨긴 파일
 GoogleService-Info.plist
+Config/Secrets.xcconfig
